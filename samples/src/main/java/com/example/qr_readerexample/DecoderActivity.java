@@ -1,23 +1,26 @@
 package com.example.qr_readerexample;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.TextView;
+
 import com.dlazaro66.qrcodereaderview.QRCodeReaderView;
 import com.dlazaro66.qrcodereaderview.QRCodeReaderView.OnQRCodeReadListener;
 
-public class DecoderActivity extends AppCompatActivity
-    implements ActivityCompat.OnRequestPermissionsResultCallback, OnQRCodeReadListener {
+public class DecoderActivity extends Activity
+    implements ActivityCompat.OnRequestPermissionsResultCallback, OnQRCodeReadListener, View.OnTouchListener {
 
   private static final int MY_PERMISSION_REQUEST_CAMERA = 0;
 
@@ -25,9 +28,10 @@ public class DecoderActivity extends AppCompatActivity
 
   private TextView resultTextView;
   private QRCodeReaderView qrCodeReaderView;
-  private CheckBox flashlightCheckBox;
-  private CheckBox enableDecodingCheckBox;
   private PointsOverlayView pointsOverlayView;
+  private GestureDetector mGestureDetector;
+  private PointF[] points;
+  private String text;
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -81,6 +85,9 @@ public class DecoderActivity extends AppCompatActivity
   @Override public void onQRCodeRead(String text, PointF[] points) {
     resultTextView.setText(text);
     pointsOverlayView.setPoints(points);
+    pointsOverlayView.setText(text);
+    this.points = points;
+    this.text = text;
   }
 
   private void requestCameraPermission() {
@@ -104,26 +111,69 @@ public class DecoderActivity extends AppCompatActivity
 
   private void initQRCodeReaderView() {
     View content = getLayoutInflater().inflate(R.layout.content_decoder, mainLayout, true);
+    mGestureDetector = new GestureDetector(new GestureDetector.OnGestureListener() {
+      @Override
+      public boolean onDown(MotionEvent motionEvent) {
 
+        if (points != null && text != null){
+
+          if (motionEvent.getX() > points[0].x-170 && motionEvent.getX() < points[0].x+490 && motionEvent.getY() > points[1].y && motionEvent.getY() < points[0].y) {
+            jump(text);
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      @Override
+      public void onShowPress(MotionEvent motionEvent) {
+
+      }
+
+      public void jump(String text){
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(text));
+//        intent.putExtra(Intent.EXTRA_SUBJECT,"Share");
+//        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+      }
+
+      @Override
+      public boolean onSingleTapUp(MotionEvent motionEvent) {
+
+        return false;
+      }
+
+      @Override
+      public boolean onScroll(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+        return false;
+      }
+
+      @Override
+      public void onLongPress(MotionEvent motionEvent) {
+
+      }
+
+      @Override
+      public boolean onFling(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+        return false;
+      }
+    });
     qrCodeReaderView = (QRCodeReaderView) content.findViewById(R.id.qrdecoderview);
     resultTextView = (TextView) content.findViewById(R.id.result_text_view);
-    flashlightCheckBox = (CheckBox) content.findViewById(R.id.flashlight_checkbox);
-    enableDecodingCheckBox = (CheckBox) content.findViewById(R.id.enable_decoding_checkbox);
     pointsOverlayView = (PointsOverlayView) content.findViewById(R.id.points_overlay_view);
 
     qrCodeReaderView.setAutofocusInterval(2000L);
     qrCodeReaderView.setOnQRCodeReadListener(this);
     qrCodeReaderView.setBackCamera();
-    flashlightCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-      @Override public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-        qrCodeReaderView.setTorchEnabled(isChecked);
-      }
-    });
-    enableDecodingCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-      @Override public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-        qrCodeReaderView.setQRDecodingEnabled(isChecked);
-      }
-    });
+    qrCodeReaderView.setQRDecodingEnabled(true);
+    qrCodeReaderView.setOnTouchListener(this);
     qrCodeReaderView.startCamera();
+  }
+
+  @Override
+  public boolean onTouch(View view, MotionEvent motionEvent) {
+    return mGestureDetector.onTouchEvent(motionEvent);
   }
 }
