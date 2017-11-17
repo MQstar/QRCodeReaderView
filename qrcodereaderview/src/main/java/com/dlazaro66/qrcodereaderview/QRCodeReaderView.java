@@ -29,6 +29,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 
+import com.google.zxing.BarcodeFormat;
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.ChecksumException;
 import com.google.zxing.DecodeHintType;
@@ -39,10 +40,12 @@ import com.google.zxing.Result;
 import com.google.zxing.ResultPoint;
 import com.google.zxing.client.android.camera.CameraManager;
 import com.google.zxing.common.HybridBinarizer;
+import com.google.zxing.multi.qrcode.QRCodeMultiReader;
 import com.google.zxing.qrcode.QRCodeReader;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Map;
 
 import static android.hardware.Camera.getCameraInfo;
@@ -58,14 +61,14 @@ public class QRCodeReaderView extends SurfaceView
 
     public interface OnQRCodeReadListener {
 
-        void onQRCodeRead(String text, PointF[] points);
+        void onQRCodeRead(ArrayList<String> textList, ArrayList<PointF[]> pointsList);
     }
 
     private OnQRCodeReadListener mOnQRCodeReadListener;
 
     private static final String TAG = QRCodeReaderView.class.getName();
 
-    private QRCodeReader mQRCodeReader;
+    private QRCodeMultiReader mQRCodeReader;
     private int mPreviewWidth;
     private int mPreviewHeight;
     private CameraManager mCameraManager;
@@ -220,7 +223,7 @@ public class QRCodeReaderView extends SurfaceView
         }
 
         try {
-            mQRCodeReader = new QRCodeReader();
+            mQRCodeReader = new QRCodeMultiReader();
             mCameraManager.startPreview();
         } catch (Exception e) {
             Log.e(TAG, "Exception: " + e.getMessage());
@@ -334,7 +337,7 @@ public class QRCodeReaderView extends SurfaceView
         return result;
     }
 
-    private static class DecodeFrameTask extends AsyncTask<byte[], Void, Result> {
+    private class DecodeFrameTask extends AsyncTask<byte[], Void, DecodeResult> {
 
         private final WeakReference<QRCodeReaderView> viewRef;
         private final WeakReference<Map<DecodeHintType, Object>> hintsRef;
@@ -347,7 +350,8 @@ public class QRCodeReaderView extends SurfaceView
         }
 
         @Override
-        protected Result doInBackground(byte[]... params) {
+        protected DecodeResult doInBackground(byte[]... params) {
+            Result rawResult[] = null;
             final QRCodeReaderView view = viewRef.get();
             if (view == null) {
                 return null;
@@ -361,32 +365,46 @@ public class QRCodeReaderView extends SurfaceView
             final BinaryBitmap bitmap = new BinaryBitmap(hybBin);
 
             try {
-                return view.mQRCodeReader.decode(bitmap, hintsRef.get());
-            } catch (ChecksumException e) {
-                Log.d(TAG, "ChecksumException", e);
+                Log.i("doInBackground","start decodeMultiple");
+                rawResult = view.mQRCodeReader.decodeMultiple(bitmap, hintsRef.get());
+//                return view.mQRCodeReader.decodeMultiple(bitmap, hintsRef.get());
+//            } catch (ChecksumException e) {
+//                Log.d(TAG, "ChecksumException", e);
             } catch (NotFoundException e) {
                 Log.d(TAG, "No QR Code found");
-            } catch (FormatException e) {
-                Log.d(TAG, "FormatException", e);
+                return null;
+//            } catch (FormatException e) {
+//                Log.d(TAG, "FormatException", e);
             } finally {
                 view.mQRCodeReader.reset();
             }
 
-            return null;
+            DecodeResult result = new DecodeResult();
+            result.results = rawResult;
+            return result;
         }
 
         @Override
-        protected void onPostExecute(Result result) {
+        protected void onPostExecute(DecodeResult result) {
             super.onPostExecute(result);
 
             final QRCodeReaderView view = viewRef.get();
-
+            ArrayList<String> textList = new ArrayList<String>();
+            ArrayList<PointF[]> transformedPointsList = new ArrayList<PointF[]>();
             // Notify we found a QRCode
-            if (view != null && result != null && view.mOnQRCodeReadListener != null) {
+            if (result == null) {
+                return;
+            }
+            if (view != null && result.results.length > 0 && view.mOnQRCodeReadListener != null) {
                 // Transform resultPoints to View coordinates
-                final PointF[] transformedPoints =
-                        transformToViewCoordinates(view, result.getResultPoints());
-                view.mOnQRCodeReadListener.onQRCodeRead(result.getText(), transformedPoints);
+                for (Result res: result.results) {
+                    textList.add(res.getText());
+
+                    final PointF[] transformedPoints =
+                            transformToViewCoordinates(view, res.getResultPoints());
+                    transformedPointsList.add(transformedPoints);
+                }
+                view.mOnQRCodeReadListener.onQRCodeRead(textList, transformedPointsList);
             }
         }
 
@@ -412,6 +430,13 @@ public class QRCodeReaderView extends SurfaceView
 
             return qrToViewPointTransformer.transform(resultPoints, isMirrorCamera, orientation,
                     viewSize, cameraPreviewSize);
+        }
+    }
+    public class DecodeResult {
+        public Result results[];
+
+        public DecodeResult() {
+            this.results = null;
         }
     }
 }

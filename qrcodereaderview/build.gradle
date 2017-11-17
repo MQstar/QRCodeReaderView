@@ -50,7 +50,6 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.7.5'
     testCompile 'org.robolectric:robolectric:3.2.2'
-    implementation files('src/test/classes.jar')
 }
 
 install {
