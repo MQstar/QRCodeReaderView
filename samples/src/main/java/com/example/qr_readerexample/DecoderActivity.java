@@ -2,14 +2,17 @@ package com.example.qr_readerexample;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -20,160 +23,192 @@ import com.dlazaro66.qrcodereaderview.QRCodeReaderView;
 import com.dlazaro66.qrcodereaderview.QRCodeReaderView.OnQRCodeReadListener;
 
 public class DecoderActivity extends Activity
-    implements ActivityCompat.OnRequestPermissionsResultCallback, OnQRCodeReadListener, View.OnTouchListener {
+        implements ActivityCompat.OnRequestPermissionsResultCallback, OnQRCodeReadListener, View.OnTouchListener {
 
-  private static final int MY_PERMISSION_REQUEST_CAMERA = 0;
+    private static final int MY_PERMISSION_REQUEST_CAMERA = 0;
 
-  private ViewGroup mainLayout;
+    private ViewGroup mainLayout;
 
-  private TextView resultTextView;
-  private QRCodeReaderView qrCodeReaderView;
-  private PointsOverlayView pointsOverlayView;
-  private GestureDetector mGestureDetector;
-  private PointF[] points;
-  private String text;
+    private TextView resultTextView;
+    private QRCodeReaderView qrCodeReaderView;
+    private PointsOverlayView pointsOverlayView;
+    private GestureDetector mGestureDetector;
+    private PointF[] points;
+    private String text;
 
-  @Override protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-    setContentView(R.layout.activity_decoder);
+        setContentView(R.layout.activity_decoder);
 
-    mainLayout = (ViewGroup) findViewById(R.id.main_layout);
+        mainLayout = (ViewGroup) findViewById(R.id.main_layout);
 
-    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-        == PackageManager.PERMISSION_GRANTED) {
-      initQRCodeReaderView();
-    } else {
-      requestCameraPermission();
-    }
-  }
-
-  @Override protected void onResume() {
-    super.onResume();
-
-    if (qrCodeReaderView != null) {
-      qrCodeReaderView.startCamera();
-    }
-  }
-
-  @Override protected void onPause() {
-    super.onPause();
-
-    if (qrCodeReaderView != null) {
-      qrCodeReaderView.stopCamera();
-    }
-  }
-
-  @Override public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-      @NonNull int[] grantResults) {
-    if (requestCode != MY_PERMISSION_REQUEST_CAMERA) {
-      return;
-    }
-
-    if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-      Snackbar.make(mainLayout, "Camera permission was granted.", Snackbar.LENGTH_SHORT).show();
-      initQRCodeReaderView();
-    } else {
-      Snackbar.make(mainLayout, "Camera permission request was denied.", Snackbar.LENGTH_SHORT)
-          .show();
-    }
-  }
-
-  // Called when a QR is decoded
-  // "text" : the text encoded in QR
-  // "points" : points where QR control points are placed
-  @Override public void onQRCodeRead(String text, PointF[] points) {
-    resultTextView.setText(text);
-    pointsOverlayView.setPoints(points);
-    pointsOverlayView.setText(text);
-    this.points = points;
-    this.text = text;
-  }
-
-  private void requestCameraPermission() {
-    if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
-      Snackbar.make(mainLayout, "Camera access is required to display the camera preview.",
-          Snackbar.LENGTH_INDEFINITE).setAction("OK", new View.OnClickListener() {
-        @Override public void onClick(View view) {
-          ActivityCompat.requestPermissions(DecoderActivity.this, new String[] {
-              Manifest.permission.CAMERA
-          }, MY_PERMISSION_REQUEST_CAMERA);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+            initQRCodeReaderView();
+        } else {
+            requestCameraPermission();
         }
-      }).show();
-    } else {
-      Snackbar.make(mainLayout, "Permission is not available. Requesting camera permission.",
-          Snackbar.LENGTH_SHORT).show();
-      ActivityCompat.requestPermissions(this, new String[] {
-          Manifest.permission.CAMERA
-      }, MY_PERMISSION_REQUEST_CAMERA);
     }
-  }
 
-  private void initQRCodeReaderView() {
-    View content = getLayoutInflater().inflate(R.layout.content_decoder, mainLayout, true);
-    mGestureDetector = new GestureDetector(new GestureDetector.OnGestureListener() {
-      @Override
-      public boolean onDown(MotionEvent motionEvent) {
+    @Override
+    protected void onResume() {
+        super.onResume();
 
-        if (points != null && text != null){
+        if (qrCodeReaderView != null) {
+            qrCodeReaderView.startCamera();
+        }
+    }
 
-          if (motionEvent.getX() > points[0].x-170 && motionEvent.getX() < points[0].x+490 && motionEvent.getY() > points[1].y && motionEvent.getY() < points[0].y) {
-            jump(text);
-            return true;
-          }
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if (qrCodeReaderView != null) {
+            qrCodeReaderView.stopCamera();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode != MY_PERMISSION_REQUEST_CAMERA) {
+            return;
         }
 
-        return false;
-      }
+        if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Snackbar.make(mainLayout, "Camera permission was granted.", Snackbar.LENGTH_SHORT).show();
+            initQRCodeReaderView();
+        } else {
+            Snackbar.make(mainLayout, "Camera permission request was denied.", Snackbar.LENGTH_SHORT)
+                    .show();
+        }
+    }
 
-      @Override
-      public void onShowPress(MotionEvent motionEvent) {
+    // Called when a QR is decoded
+    // "text" : the text encoded in QR
+    // "points" : points where QR control points are placed
+    @Override
+    public void onQRCodeRead(String text, PointF[] points) {
+        resultTextView.setText(text);
+        pointsOverlayView.setPoints(points);
+        pointsOverlayView.setText(text);
+        this.points = points;
+        this.text = text;
+    }
 
-      }
 
-      public void jump(String text){
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(Uri.parse(text));
+    private void requestCameraPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
+            Snackbar.make(mainLayout, "Camera access is required to display the camera preview.",
+                    Snackbar.LENGTH_INDEFINITE).setAction("OK", new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    ActivityCompat.requestPermissions(DecoderActivity.this, new String[]{
+                            Manifest.permission.CAMERA
+                    }, MY_PERMISSION_REQUEST_CAMERA);
+                }
+            }).show();
+        } else {
+            Snackbar.make(mainLayout, "Permission is not available. Requesting camera permission.",
+                    Snackbar.LENGTH_SHORT).show();
+            ActivityCompat.requestPermissions(this, new String[]{
+                    Manifest.permission.CAMERA
+            }, MY_PERMISSION_REQUEST_CAMERA);
+        }
+    }
+
+    private void initQRCodeReaderView() {
+        View content = getLayoutInflater().inflate(R.layout.content_decoder, mainLayout, true);
+        mGestureDetector = new GestureDetector(new GestureDetector.OnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent motionEvent) {
+
+                if (points != null && text != null) {
+
+                    if (motionEvent.getX() > points[0].x - 170 && motionEvent.getX() < points[0].x + 490 && motionEvent.getY() > points[1].y && motionEvent.getY() < points[0].y) {
+                        jump(text);
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            @Override
+            public void onShowPress(MotionEvent motionEvent) {
+
+            }
+
+            public void jump(String text) {
+
+                Intent intent = new Intent();
+                if (text.toLowerCase().startsWith("https://u.wechat.com")) {
+
+                    ComponentName cmp = new ComponentName("com.tencent.mm", "com.tencent.mm.ui.LauncherUI");
+                    intent.setAction(Intent.ACTION_MAIN);
+                    intent.addCategory(Intent.CATEGORY_LAUNCHER);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.setComponent(cmp);
+                    startActivity(intent);
+                } else if (text.toLowerCase().startsWith("https://qr.alipay.com")) {
+                } else if (text.toLowerCase().startsWith("taobao://")) {
+                    String uri = "taobao://shop.m.taobao.com/shop/shop_index.htm";
+
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(uri)));
+                } else if (text.toLowerCase().startsWith("http://m.jd.com")) {
+
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("openapp.jdmobile://virtual?params=%7B%22sourceValue%22:%220_productDetail_97%22,%22des%22:%22productDetail%22,%22skuId%22:%22\"+id+\"%22,%22category%22:%22jump%22,%22sourceType%22:%22PCUBE_CHANNEL%22%7D")));
+                } else if (text.toLowerCase().startsWith("tel:") || text.toLowerCase().startsWith("http://")) {
+                    intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse(text));
+                    startActivity(intent);
+                } else {
+                    Log.i("ARQR", "jump: Normal text");
+                }
+
+
 //        intent.putExtra(Intent.EXTRA_SUBJECT,"Share");
 //        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-      }
 
-      @Override
-      public boolean onSingleTapUp(MotionEvent motionEvent) {
+            }
 
-        return false;
-      }
+            @Override
+            public boolean onSingleTapUp(MotionEvent motionEvent) {
 
-      @Override
-      public boolean onScroll(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
-        return false;
-      }
+                return false;
+            }
 
-      @Override
-      public void onLongPress(MotionEvent motionEvent) {
+            @Override
+            public boolean onScroll(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+                return false;
+            }
 
-      }
+            @Override
+            public void onLongPress(MotionEvent motionEvent) {
 
-      @Override
-      public boolean onFling(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
-        return false;
-      }
-    });
-    qrCodeReaderView = (QRCodeReaderView) content.findViewById(R.id.qrdecoderview);
-    resultTextView = (TextView) content.findViewById(R.id.result_text_view);
-    pointsOverlayView = (PointsOverlayView) content.findViewById(R.id.points_overlay_view);
+            }
 
-    qrCodeReaderView.setAutofocusInterval(2000L);
-    qrCodeReaderView.setOnQRCodeReadListener(this);
-    qrCodeReaderView.setBackCamera();
-    qrCodeReaderView.setQRDecodingEnabled(true);
-    qrCodeReaderView.setOnTouchListener(this);
-    qrCodeReaderView.startCamera();
-  }
+            @Override
+            public boolean onFling(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+                return false;
+            }
+        });
+        qrCodeReaderView = (QRCodeReaderView) content.findViewById(R.id.qrdecoderview);
+        resultTextView = (TextView) content.findViewById(R.id.result_text_view);
+        pointsOverlayView = (PointsOverlayView) content.findViewById(R.id.points_overlay_view);
 
-  @Override
-  public boolean onTouch(View view, MotionEvent motionEvent) {
-    return mGestureDetector.onTouchEvent(motionEvent);
-  }
+        qrCodeReaderView.setAutofocusInterval(2000L);
+        qrCodeReaderView.setOnQRCodeReadListener(this);
+        qrCodeReaderView.setBackCamera();
+        qrCodeReaderView.setQRDecodingEnabled(true);
+        qrCodeReaderView.setOnTouchListener(this);
+        qrCodeReaderView.startCamera();
+    }
+
+    @Override
+    public boolean onTouch(View view, MotionEvent motionEvent) {
+        return mGestureDetector.onTouchEvent(motionEvent);
+    }
 }
