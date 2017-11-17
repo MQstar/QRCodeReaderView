@@ -31,12 +31,21 @@ public class DecoderActivity extends Activity
 
     private ViewGroup mainLayout;
 
+<<<<<<< HEAD
     private TextView resultTextView;
     private QRCodeReaderView qrCodeReaderView;
     private PointsOverlayView pointsOverlayView;
     private GestureDetector mGestureDetector;
+    private PointF[] points;
+    private String text;
+=======
+  private TextView resultTextView;
+  private QRCodeReaderView qrCodeReaderView;
+  private PointsOverlayView pointsOverlayView;
+  private GestureDetector mGestureDetector;
   private ArrayList<PointF[]> pointsList;
   private ArrayList<String> textList;
+>>>>>>> a1f8efa... add multi QR support
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,13 +100,15 @@ public class DecoderActivity extends Activity
     // Called when a QR is decoded
     // "text" : the text encoded in QR
     // "points" : points where QR control points are placed
-  @Override public void onQRCodeRead(ArrayList<String> textList, ArrayList<PointF[]> pointsList) {
-    resultTextView.setText("Hackathon Demo");
-    pointsOverlayView.setPointsList(pointsList);
-    pointsOverlayView.setTextList(textList);
-    this.pointsList = pointsList;
-    this.textList = textList;
+    @Override
+    public void onQRCodeRead(String text, PointF[] points) {
+        resultTextView.setText(text);
+        pointsOverlayView.setPoints(points);
+        pointsOverlayView.setText(text);
+        this.points = points;
+        this.text = text;
     }
+<<<<<<< HEAD
 
 
     private void requestCameraPermission() {
@@ -117,14 +128,65 @@ public class DecoderActivity extends Activity
             ActivityCompat.requestPermissions(this, new String[]{
                     Manifest.permission.CAMERA
             }, MY_PERMISSION_REQUEST_CAMERA);
+=======
+  }
+
+  // Called when a QR is decoded
+  // "text" : the text encoded in QR
+  // "points" : points where QR control points are placed
+  @Override public void onQRCodeRead(ArrayList<String> textList, ArrayList<PointF[]> pointsList) {
+    resultTextView.setText("Hackathon Demo");
+    pointsOverlayView.setPointsList(pointsList);
+    pointsOverlayView.setTextList(textList);
+    this.pointsList = pointsList;
+    this.textList = textList;
+  }
+
+  private void requestCameraPermission() {
+    if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
+      Snackbar.make(mainLayout, "Camera access is required to display the camera preview.",
+          Snackbar.LENGTH_INDEFINITE).setAction("OK", new View.OnClickListener() {
+        @Override public void onClick(View view) {
+          ActivityCompat.requestPermissions(DecoderActivity.this, new String[] {
+              Manifest.permission.CAMERA
+          }, MY_PERMISSION_REQUEST_CAMERA);
+>>>>>>> a1f8efa... add multi QR support
         }
     }
 
+<<<<<<< HEAD
     private void initQRCodeReaderView() {
         View content = getLayoutInflater().inflate(R.layout.content_decoder, mainLayout, true);
         mGestureDetector = new GestureDetector(new GestureDetector.OnGestureListener() {
             @Override
             public boolean onDown(MotionEvent motionEvent) {
+
+                if (points != null && text != null) {
+
+                    if (motionEvent.getX() > points[0].x - 170 && motionEvent.getX() < points[0].x + 490 && motionEvent.getY() > points[1].y && motionEvent.getY() < points[0].y) {
+                        jump(text);
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            @Override
+            public void onShowPress(MotionEvent motionEvent) {
+
+            }
+
+            public void jump(String text) {
+
+                Intent intent = new Intent();
+                if (text.toLowerCase().startsWith("https://u.wechat.com")) {
+=======
+  private void initQRCodeReaderView() {
+    View content = getLayoutInflater().inflate(R.layout.content_decoder, mainLayout, true);
+    mGestureDetector = new GestureDetector(new GestureDetector.OnGestureListener() {
+      @Override
+      public boolean onDown(MotionEvent motionEvent) {
         Log.i("initQRCodeReaderView()","onDown start");
         if ((pointsList == null) || (pointsList.size() <= 0) || (pointsList.size() != textList.size())) {
           Log.e("initQRCodeReaderView()","onDown pointsList is empty");
@@ -141,18 +203,9 @@ public class DecoderActivity extends Activity
           }
         }
         Log.i("initQRCodeReaderView()","onDown end");
-                return false;
-            }
-
-            @Override
-            public void onShowPress(MotionEvent motionEvent) {
-
-            }
-
-            public void jump(String text) {
-
-                Intent intent = new Intent();
-                if (text.toLowerCase().startsWith("https://u.wechat.com")) {
+        return false;
+      }
+>>>>>>> a1f8efa... add multi QR support
 
                     ComponentName cmp = new ComponentName("com.tencent.mm", "com.tencent.mm.ui.LauncherUI");
                     intent.setAction(Intent.ACTION_MAIN);
@@ -179,6 +232,7 @@ public class DecoderActivity extends Activity
 
 //        intent.putExtra(Intent.EXTRA_SUBJECT,"Share");
 //        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+<<<<<<< HEAD
 
             }
 
@@ -213,11 +267,53 @@ public class DecoderActivity extends Activity
         qrCodeReaderView.setQRDecodingEnabled(true);
         qrCodeReaderView.setOnTouchListener(this);
         qrCodeReaderView.startCamera();
-    Log.i("initQRCodeReaderView()","Camera started");
     }
 
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
         return mGestureDetector.onTouchEvent(motionEvent);
     }
+=======
+        startActivity(intent);
+      }
+
+      @Override
+      public boolean onSingleTapUp(MotionEvent motionEvent) {
+
+        return false;
+      }
+
+      @Override
+      public boolean onScroll(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+        return false;
+      }
+
+      @Override
+      public void onLongPress(MotionEvent motionEvent) {
+
+      }
+
+      @Override
+      public boolean onFling(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+        return false;
+      }
+    });
+    qrCodeReaderView = (QRCodeReaderView) content.findViewById(R.id.qrdecoderview);
+    resultTextView = (TextView) content.findViewById(R.id.result_text_view);
+    pointsOverlayView = (PointsOverlayView) content.findViewById(R.id.points_overlay_view);
+
+    qrCodeReaderView.setAutofocusInterval(2000L);
+    qrCodeReaderView.setOnQRCodeReadListener(this);
+    qrCodeReaderView.setBackCamera();
+    qrCodeReaderView.setQRDecodingEnabled(true);
+    qrCodeReaderView.setOnTouchListener(this);
+    qrCodeReaderView.startCamera();
+    Log.i("initQRCodeReaderView()","Camera started");
+  }
+
+  @Override
+  public boolean onTouch(View view, MotionEvent motionEvent) {
+    return mGestureDetector.onTouchEvent(motionEvent);
+  }
+>>>>>>> a1f8efa... add multi QR support
 }

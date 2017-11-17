@@ -15,10 +15,17 @@ import java.util.ArrayList;
 
 public class PointsOverlayView extends View {
 
-  ArrayList<PointF[]> pointsList;
-  ArrayList<String> textList;
+<<<<<<< HEAD
+    PointF[] points;
+    String text;
     private Paint paint;
     private Paint textPaint;
+=======
+  ArrayList<PointF[]> pointsList;
+  ArrayList<String> textList;
+  private Paint paint;
+  private Paint textPaint;
+>>>>>>> a1f8efa... add multi QR support
 
     public PointsOverlayView(Context context) {
         super(context);
@@ -45,17 +52,16 @@ public class PointsOverlayView extends View {
         paint.setStyle(Paint.Style.FILL);
         paint.setAlpha(80);
 
+<<<<<<< HEAD
 
-    }
-
+=======
   public void setPointsList(ArrayList<PointF[]> pointsList) {
     this.pointsList = pointsList;
-        invalidate();
-    }
+    invalidate();
+  }
 
-    @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
+  @Override public void draw(Canvas canvas) {
+    super.draw(canvas);
     Log.i("PointsOverlayView","draw()");
     if (pointsList == null || textList == null) {
       Log.e("PointsOverlayView","draw():pointsList is null or textList is null");
@@ -69,6 +75,36 @@ public class PointsOverlayView extends View {
       String text;
       text = (String) textList.get(pointsList.indexOf(points));
       if (points != null && text != null) {
+        canvas.drawRect(points[0].x - 170, (points[1].y + points[0].y + 35) / 2, points[0].x + 490, (points[1].y + points[0].y - 70) / 2, paint);
+        canvas.drawText(text, points[0].x - 150, (points[1].y + points[0].y) / 2, textPaint);
+      }
+>>>>>>> a1f8efa... add multi QR support
+    }
+
+<<<<<<< HEAD
+    public void setPoints(PointF[] points) {
+        this.points = points;
+        invalidate();
+    }
+=======
+  public void setTextList(ArrayList<String> textList) {
+    ArrayList<String> tmpList = new ArrayList<String>();
+    for (String text: textList) {
+      String text1;
+      if (text.length() > 30)
+        text1 = text.substring(0, 30) + "...";
+      else
+        text1 = text;
+      tmpList.add(text1);
+    }
+    this.textList = tmpList;
+  }
+>>>>>>> a1f8efa... add multi QR support
+
+    @Override
+    public void draw(Canvas canvas) {
+        super.draw(canvas);
+        if (points != null && text != null) {
             Bitmap bitmap = null;
             if (text.toLowerCase().startsWith("https://u.wechat.com")) {
                 bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.weixin);
@@ -94,19 +130,12 @@ public class PointsOverlayView extends View {
             canvas.drawText(text, points[0].x - 150, (points[1].y + points[0].y) / 2, textPaint);
         }
     }
-  }
 
-  public void setTextList(ArrayList<String> textList) {
-    ArrayList<String> tmpList = new ArrayList<String>();
-    for (String text: textList) {
-      String text1;
-      if (text.length() > 30)
-        text1 = text.substring(0, 30) + "...";
-      else
-        text1 = text;
-      tmpList.add(text1);
-    }
-    this.textList = tmpList;
+    public void setText(String text) {
+        if (text.length() > 30)
+            this.text = text.substring(0, 30) + "...";
+        else
+            this.text = text;
     }
 
 
